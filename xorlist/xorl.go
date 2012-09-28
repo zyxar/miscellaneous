@@ -6,12 +6,6 @@ import (
 	"unsafe"
 )
 
-const (
-	LeftToRight = false
-	RightToLeft = true
-	Default     = false
-)
-
 type xnode struct {
 	ptr  *xnode      "pointer"
 	data interface{} "payload"
@@ -77,29 +71,51 @@ func (list *XorList) Append(data interface{}) error {
 	return nil
 }
 
+func (list *XorList) Trim() {
+	list.Lock()
+	defer list.Unlock()
+	if list.length < 1 {
+		return
+	}
+	p1 := xor(list.tail, list.tail.ptr)
+	p0 := xor(list.tail, p1.ptr)
+	p1.ptr = xor(p1, p0)
+	list.length--
+	list.tail = p1
+}
+
+func (list *XorList) Reverse() *XorList {
+	list.Lock()
+	defer list.Unlock()
+	l := new(XorList)
+	if l == nil {
+		return nil
+	}
+	*l = *list
+	l.head = list.tail
+	l.tail = list.head
+	return l
+}
+
 func (list *XorList) Len() int {
 	list.Lock()
 	defer list.Unlock()
 	return list.length
 }
 
-func (list *XorList) Traverse(reverse bool) []interface{} {
+func (list *XorList) Traverse() []interface{} {
 	list.Lock()
 	defer list.Unlock()
-	var p0, p1, p2, head, tail *xnode
-	if reverse {
-		head = list.tail
-		tail = list.head
-	} else {
-		head = list.head
-		tail = list.tail
+	if list.length == 0 {
+		return nil
 	}
-	p0 = head
+	var p0, p1, p2 *xnode
+	p0 = list.head
 	p1 = p0
 	ret := make([]interface{}, list.length)
 	ret[0] = p1.data
 	i := 1
-	for p1 != tail {
+	for p1 != list.tail {
 		p2 = xor(p0, p1.ptr)
 		ret[i] = p2.data
 		p0 = p1
@@ -109,29 +125,22 @@ func (list *XorList) Traverse(reverse bool) []interface{} {
 	return ret
 }
 
-func (list *XorList) Get(num uint, reverse bool) interface{} {
+func (list *XorList) Get(num uint) interface{} {
 	list.Lock()
 	defer list.Unlock()
 	if num >= uint(list.length) {
 		return nil
 	}
-	if reverse {
-		return tr(list.tail, num).data
-	}
 	return tr(list.head, num).data
 }
 
-func (list *XorList) Set(num uint, value interface{}, reverse bool) error {
+func (list *XorList) Set(num uint, value interface{}) error {
 	list.Lock()
 	defer list.Unlock()
 	if num >= uint(list.length) {
 		return fmt.Errorf("Index out of range.")
 	}
-	if reverse {
-		tr(list.tail, num).data = value
-	} else {
-		tr(list.head, num).data = value
-	}
+	tr(list.head, num).data = value
 	return nil
 }
 
@@ -150,7 +159,9 @@ func tr(head *xnode, num uint) *xnode {
 // 	if err != nil {
 // 		return
 // 	}
-// 	fmt.Println(a.Traverse(LeftToRight))
+// 	fmt.Println(a.Traverse())
 // 	a.Append("data")
-// 	fmt.Println(a.Traverse(RightToLeft))
+// 	fmt.Println(a.Reverse().Traverse())
+// 	a.Trim()
+// 	fmt.Println(a.Traverse())
 // }
