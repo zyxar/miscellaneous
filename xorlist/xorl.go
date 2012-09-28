@@ -60,6 +60,23 @@ func New(data []interface{}) (*XorList, error) {
 	return &XorList{head, tail, length, new(sync.Mutex)}, nil
 }
 
+func (list *XorList) Append(data interface{}) error {
+	list.Lock()
+	defer list.Unlock()
+	p := new(xnode)
+	if p == nil {
+		return fmt.Errorf("insufficient memory.")
+	}
+	p.data = data
+	p1 := list.tail
+	p0 := xor(p1, p1.ptr)
+	p1.ptr = xor(p0, p)
+	p.ptr = xor(p1, p)
+	list.tail = p
+	list.length++
+	return nil
+}
+
 func (list *XorList) Len() int {
 	list.Lock()
 	defer list.Unlock()
@@ -128,3 +145,12 @@ func tr(head *xnode, num uint) *xnode {
 	return p0
 }
 
+// func main() {
+// 	a, err := New([]interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9, 44, 32})
+// 	if err != nil {
+// 		return
+// 	}
+// 	fmt.Println(a.Traverse(LeftToRight))
+// 	a.Append("data")
+// 	fmt.Println(a.Traverse(RightToLeft))
+// }
