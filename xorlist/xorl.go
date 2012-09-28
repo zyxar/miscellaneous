@@ -1,4 +1,4 @@
-package main
+package xorlist
 
 import (
 	"fmt"
@@ -128,13 +128,3 @@ func tr(head *xnode, num uint) *xnode {
 	return p0
 }
 
-func main() {
-	list, err := New([]interface{}{1, 2, 3, 4, 5, 65, 9, 44})
-	fmt.Printf("%v:\n", list)
-	if err == nil {
-		fmt.Println(list.Traverse(LeftToRight))
-		fmt.Println(list.Get(7, RightToLeft))
-		list.Set(6, "value", LeftToRight)
-		fmt.Println(list.Traverse(LeftToRight))
-	}
-}
